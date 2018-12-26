@@ -1,0 +1,9 @@
+C:\Users\Mike\Documents\Projects\ScheduleCreator\ScheduleCreator\ScheduleCreator\bin\Debug\Schedule Builder.exe.config
+C:\Users\Mike\Documents\Projects\ScheduleCreator\ScheduleCreator\ScheduleCreator\bin\Debug\Schedule Builder.exe
+C:\Users\Mike\Documents\Projects\ScheduleCreator\ScheduleCreator\ScheduleCreator\bin\Debug\Schedule Builder.pdb
+C:\Users\Mike\Documents\Projects\ScheduleCreator\ScheduleCreator\ScheduleCreator\obj\Debug\ScheduleCreator.Form1.resources
+C:\Users\Mike\Documents\Projects\ScheduleCreator\ScheduleCreator\ScheduleCreator\obj\Debug\ScheduleCreator.Properties.Resources.resources
+C:\Users\Mike\Documents\Projects\ScheduleCreator\ScheduleCreator\ScheduleCreator\obj\Debug\ScheduleCreator.csproj.GenerateResource.cache
+C:\Users\Mike\Documents\Projects\ScheduleCreator\ScheduleCreator\ScheduleCreator\obj\Debug\ScheduleCreator.csproj.CoreCompileInputs.cache
+C:\Users\Mike\Documents\Projects\ScheduleCreator\ScheduleCreator\ScheduleCreator\obj\Debug\Schedule Builder.exe
+C:\Users\Mike\Documents\Projects\ScheduleCreator\ScheduleCreator\ScheduleCreator\obj\Debug\Schedule Builder.pdb

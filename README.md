@@ -1,4 +1,4 @@
-# ScheduleTextToExcelCreator
+# Schedule Text To Excel Creator
 
 Description:
 A simple project I started on Dec. 21st. My intention was to make an application that'll allow me to more easily create an Excel sheet that represents my schedule. 

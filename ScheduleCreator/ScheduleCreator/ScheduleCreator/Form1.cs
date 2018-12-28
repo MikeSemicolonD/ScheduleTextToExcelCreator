@@ -996,11 +996,35 @@ namespace ScheduleCreator
                         //Loop through all the data in that entry
                         for (int x = 1; x <= entries[0].entryData.Length; x++)
                         {
-                            int weight = (entries[y - 1].day2Entry) ? entries[y - 1].day2weight : entries[y - 1].day1weight;
+                            if (x == 5 || x == 6 && entries[y - 1].day2weight != 0)
+                            {
+                                int weight = (entries[y - 1].day2Entry) ? entries[y - 1].day2weight : entries[y - 1].day1weight;
 
-                            //Store the data into each cell
-                            excelWorksheet.Cells[y, x] = entries[y - 1].entryData[x - 1]+' '+weight;
+                                //Store the data into each cell
+                                excelWorksheet.Cells[y, x] = entries[y - 1].entryData[x - 1] + ' ' + weight;
+                            }
+                            else
+                            {
+                                excelWorksheet.Cells[y, x] = entries[y - 1].entryData[x - 1];
+                            }
                         }
+                    }
+                    
+                    //If we want to also include the sum of the credits we're going for
+                    if (checkBox2.Checked)
+                    {
+                        var creditCell = excelWorksheet.Cells[entries.Count + 2, 9];
+
+                        creditCell.Font.Bold = true;
+                        creditCell.HorizontalAlignment = XlHAlign.xlHAlignCenter;
+                        creditCell.VerticalAlignment = XlVAlign.xlVAlignCenter;
+                        excelWorksheet.Cells[entries.Count + 2, 9] = creditSum.ToString();
+
+                        var creditTotalLabel = excelWorksheet.Cells[entries.Count + 2, 9];
+                        
+                        creditTotalLabel.HorizontalAlignment = XlHAlign.xlHAlignRight;
+                        creditTotalLabel.VerticalAlignment = XlVAlign.xlVAlignCenter;
+                        excelWorksheet.Cells[entries.Count + 2, 8] = "Credit Total:";
                     }
 
                     //Make sure the data fits

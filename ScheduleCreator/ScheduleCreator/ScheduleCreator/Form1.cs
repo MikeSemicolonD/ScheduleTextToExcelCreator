@@ -30,7 +30,7 @@ namespace ScheduleCreator
                 try
                 {
                     //Read data and put it on the screen
-                    StreamReader quickRead = new StreamReader("C:\\Users\\Mike\\Desktop\\Data.txt");
+                    StreamReader quickRead = new StreamReader("C:\\Users\\Mike\\Desktop\\DataToParse.txt");
                     textBox1.Text = quickRead.ReadToEnd();
                     quickRead.Close();
 
@@ -219,9 +219,13 @@ namespace ScheduleCreator
         /// <param name="e"></param>
         private void Button3_Click(object sender, EventArgs e)
         {
-            if (textBox2.Text.Length >= 4)
+            if (textBox2.Text != "" && textBox2.Text.Length >= 3)
             {
                 GenerateExcelFile(TableData, checkBox1.Checked);
+            }
+            else
+            {
+                MessageBox.Show("Invalid File path!");
             }
         }
 
@@ -751,7 +755,7 @@ namespace ScheduleCreator
 
                     //Loop through each entry
                     //Left+right index should be used to create a range for that given day
-                    for (int tableYvalue = 1, UpperYIndex = 0, BottomYIndex = 0, lastDayValueFound = -1, foundDayValue = 0; tableYvalue <= 12; tableYvalue++)
+                    for (int tableYvalue = 1, UpperYIndex = 0, BottomYIndex = 0, lastDayValueFound = -1, foundDayValue = 0; tableYvalue <= entries.Count+1; tableYvalue++)
                     {
                         //Input each piece of data into each column cell
                         for (int tableXvalue = 1; tableXvalue <= 7; tableXvalue++)
@@ -896,7 +900,7 @@ namespace ScheduleCreator
                                 else
                                 {
                                     //If the day we're on isn't the same day or we hit the last entry
-                                    if (lastDayValueFound != foundDayValue || tableYvalue == entries.Count + 1)
+                                    if ((lastDayValueFound != foundDayValue || tableYvalue == entries.Count + 1) && tableXvalue == 7)
                                     {
                                         //Shift up one since it's not friday
                                         if (lastDayValueFound != 4)
@@ -947,9 +951,7 @@ namespace ScheduleCreator
                                             excelWorksheet.Cells[cellOffset, 1].VerticalAlignment = XlVAlign.xlVAlignBottom;
                                             excelWorksheet.Cells[cellOffset, 1] = DayStrings[lastDayValueFound];
                                         }
-
-                                        //TODO: Remember this range for this day so we can go back and format it
-
+                                        
                                         lastDayValueFound = foundDayValue;
                                         UpperYIndex = tableYvalue;
                                     }

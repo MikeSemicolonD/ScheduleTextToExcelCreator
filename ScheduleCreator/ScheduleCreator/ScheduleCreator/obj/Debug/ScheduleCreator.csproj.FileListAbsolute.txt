@@ -11,9 +11,10 @@ C:\Users\Mike\Documents\Projects\ScheduleTextToExcelCreator\ScheduleCreator\Sche
 C:\Users\Mike\Documents\Projects\ScheduleTextToExcelCreator\ScheduleCreator\ScheduleCreator\ScheduleCreator\bin\Debug\Schedule Builder.exe
 C:\Users\Mike\Documents\Projects\ScheduleTextToExcelCreator\ScheduleCreator\ScheduleCreator\ScheduleCreator\bin\Debug\Schedule Builder.pdb
 C:\Users\Mike\Documents\Projects\ScheduleTextToExcelCreator\ScheduleCreator\ScheduleCreator\ScheduleCreator\obj\Debug\ScheduleCreator.csprojAssemblyReference.cache
-C:\Users\Mike\Documents\Projects\ScheduleTextToExcelCreator\ScheduleCreator\ScheduleCreator\ScheduleCreator\obj\Debug\ScheduleCreator.Form1.resources
 C:\Users\Mike\Documents\Projects\ScheduleTextToExcelCreator\ScheduleCreator\ScheduleCreator\ScheduleCreator\obj\Debug\ScheduleCreator.Properties.Resources.resources
 C:\Users\Mike\Documents\Projects\ScheduleTextToExcelCreator\ScheduleCreator\ScheduleCreator\ScheduleCreator\obj\Debug\ScheduleCreator.csproj.GenerateResource.cache
 C:\Users\Mike\Documents\Projects\ScheduleTextToExcelCreator\ScheduleCreator\ScheduleCreator\ScheduleCreator\obj\Debug\ScheduleCreator.csproj.CoreCompileInputs.cache
 C:\Users\Mike\Documents\Projects\ScheduleTextToExcelCreator\ScheduleCreator\ScheduleCreator\ScheduleCreator\obj\Debug\Schedule Builder.exe
 C:\Users\Mike\Documents\Projects\ScheduleTextToExcelCreator\ScheduleCreator\ScheduleCreator\ScheduleCreator\obj\Debug\Schedule Builder.pdb
+C:\Users\Mike\Documents\Projects\ScheduleTextToExcelCreator\ScheduleCreator\ScheduleCreator\ScheduleCreator\obj\Debug\ScheduleCreator.MainWindow.resources
+C:\Users\Mike\Documents\Projects\ScheduleTextToExcelCreator\ScheduleCreator\ScheduleCreator\ScheduleCreator\obj\Debug\ScheduleCreator.SettingsWindow.resources

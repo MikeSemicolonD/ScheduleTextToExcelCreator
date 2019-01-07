@@ -10,46 +10,24 @@ using DataTable = System.Data.DataTable;
 
 namespace ScheduleCreator
 {
-    public partial class Form1 : Form
+    public partial class MainWindow : Form
     {
-        /// <summary>
-        /// Automatically assigns values and calls functions as soon as the Form starts up.
-        /// Meant to streamline the debugging process
-        /// </summary>
-        /// <param name="active"></param>
-        /// <param name="autoExport"></param>
-        /// <param name="forceOutputRawData"></param>
-        private void Debuggery(bool active= false, bool autoExport = false, bool forceOutputRawData = false)
+        public static MainWindow instance;
+
+        //User Settings
+        public struct Settings
         {
-            //If Debuggery's enabled
-            if (active)
-            {
-                //Define excel destination
-                textBox2.Text = "C:\\Users\\Mike\\Desktop";
-
-                try
-                {
-                    //Read data and put it on the screen
-                    StreamReader quickRead = new StreamReader("C:\\Users\\Mike\\Desktop\\DataToParse.txt");
-                    textBox1.Text = quickRead.ReadToEnd();
-                    quickRead.Close();
-
-                    //Parse the data that was put on the screen
-                    ParseAndDisplayTable();
-
-                    //Export automatically if specified
-                    if(autoExport)
-                    {
-                        GenerateExcelFile(TableData, (forceOutputRawData) ? true : checkBox1.Checked);
-                    }
-
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message+" : "+ex.StackTrace);
-                }
-            }
+            public bool OutputDataAsRawInExcel;
+            public bool OutputCreditTotalInExcel;
+            public bool SwitchDayAndMonthPositionInExcel;
+            public int SelectedParserTemplate;
         }
+
+        //Default Settings
+        public readonly Settings Default = new Settings { OutputDataAsRawInExcel = false, OutputCreditTotalInExcel = true, SwitchDayAndMonthPositionInExcel = false, SelectedParserTemplate = 0 };
+
+        //Settings that we'll modify at runtime
+        public Settings RuntimeSettings = new Settings();
 
         /// <summary>
         /// Values for every weekday
@@ -57,34 +35,44 @@ namespace ScheduleCreator
         private enum DayValue {Monday = 0, Tuesday = 2400, Wednesday = 4800, Thursday = 7200, Friday = 9600};
 
         /// <summary>
+        /// Day string values to be accessed by a loop
+        /// </summary>
+        private readonly string[] DayStrings = new string[5] {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday" };
+
+        /// <summary>
+        /// The number of data strings we expect to get from the DataParser()
+        /// </summary>
+        private const int NUMBER_OF_ENTRY_DATA_ELEMENTS = 9;
+
+        /// <summary>
+        /// Raw data entries
+        /// </summary>
+        private List<Entry> DataEntries;
+
+        /// <summary>
         /// The sum of all the credits owed for each class
         /// </summary>
         private int creditSum = 0;
 
         /// <summary>
-        /// Day string values to be accessed by a loop
+        /// Table for storing schedule data when it's been successfully parsed.
         /// </summary>
-        private string[] DayStrings = new string[5] {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday" };
-
-        /// <summary>
-        /// Raw data entries
-        /// </summary>
-        private List<Entry> entries;
+        private DataTable TableData;
 
         /// <summary>
         /// Array element to store the data
         /// </summary>
-        private class Entry
+        private struct Entry
         {
             //Monday = 0, T = 2400, W = 4800, T = 7200, F = 9600
-            public int day1weight = 0;
-            public int day2weight = 0;
+            public int day1weight;
+            public int day2weight;
 
             //Is a duplicate entry representing the second day
             public bool day2Entry;
 
             //Represents the staring military time 
-            public int timeValue = 0;
+            public int timeValue;
             
             //0 = ClassName 
             //1 = Professor 
@@ -95,11 +83,11 @@ namespace ScheduleCreator
             //6 = Time  
             //7 = Location  
             //8 = Credits 
-            public string[] entryData = new string[9];
+            public string[] dataStrings;
 
             public void CopyData(ref Entry EntryToCopyTo)
             {
-                EntryToCopyTo.entryData = this.entryData;
+                EntryToCopyTo.dataStrings = this.dataStrings;
                 EntryToCopyTo.timeValue = this.timeValue;
                 EntryToCopyTo.day1weight = this.day1weight;
                 EntryToCopyTo.day2weight = this.day2weight;
@@ -110,36 +98,31 @@ namespace ScheduleCreator
         /// Represents a range to find a given substring.
         /// Should be put into an array with a starting marker followed by not a starting marker
         /// </summary>
-        private class ParseMarker
+        private struct ParseMarker
         {
             //Target char to look for
             public char target;
 
             //Extra offset for the front of the substring
-            public int StartCharOffset = 0;
+            public int StartCharOffset;
 
             //Offset the index of the char we find either to the left or right (Represents the end of the substring we're looking for)
-            public int EndingCharOffset = 0;
+            public int EndingCharOffset;
 
             //If it's a starting marker assign this char index to left index
-            public bool startingMarker = false;
+            public bool startingMarker;
 
             //If it's an end marker then substring the value according to the last ParseMarker that was a startingMarker
-            public bool endMarker = false;
+            public bool endMarker;
 
             //If we don't find it and we don't have to parse the string, skip it
-            public bool optional = false;
+            public bool optional;
         }
-
-        /// <summary>
-        /// Table for storing schedule data when it's been successfully parsed.
-        /// </summary>
-        private DataTable TableData;
-
+        
         /// <summary>
         /// Colors representing Monday (0) through Friday (4)
         /// </summary>
-        private Color[] dayColors = 
+        private readonly Color[] dayColors = 
         {
             Color.FromArgb(1,208,224,227),
             Color.FromArgb(1,207,226,243),
@@ -172,11 +155,44 @@ namespace ScheduleCreator
         /// <summary>
         /// When the form is initialized
         /// </summary>
-        public Form1()
+        public MainWindow()
         {
+            instance = this;
+            LoadSettings();
             InitializeComponent();
             SetupUI();
             Debuggery();
+        }
+
+        /// <summary>
+        /// Sets the runtime settings to default
+        /// </summary>
+        public void ApplyDefaultSettings()
+        {
+            RuntimeSettings = Default;
+        }
+
+        /// <summary>
+        /// Gets called by the Settings window when Apply/Set to Default buttons are pressed
+        /// </summary>
+        /// <param name="OutputAsRaw"></param>
+        /// <param name="IncludeCreditTotal"></param>
+        /// <param name="SwitchDayMonth"></param>
+        /// <param name="SetTemplate"></param>
+        public void ApplyNewSettings(bool OutputAsRaw,bool IncludeCreditTotal, bool SwitchDayMonth, int SetTemplate)
+        {
+            RuntimeSettings.OutputDataAsRawInExcel = OutputAsRaw;
+            RuntimeSettings.OutputCreditTotalInExcel = IncludeCreditTotal;
+            RuntimeSettings.SwitchDayAndMonthPositionInExcel = SwitchDayMonth;
+            RuntimeSettings.SelectedParserTemplate = SetTemplate;
+        }
+
+        /// <summary>
+        /// Applys Default settings
+        /// </summary>
+        private void LoadSettings()
+        {
+            ApplyDefaultSettings();
         }
 
         /// <summary>
@@ -187,7 +203,45 @@ namespace ScheduleCreator
             dataGridView1.Visible = false;
             button3.Enabled = false;
             button4.Visible = false;
-            comboBox1.SelectedIndex = 0;
+        }
+
+        /// <summary>
+        /// Automatically assigns values and calls functions as soon as the Form starts up.
+        /// Meant to streamline the debugging process
+        /// </summary>
+        /// <param name="active"></param>
+        /// <param name="autoExport"></param>
+        /// <param name="forceOutputRawData"></param>
+        private void Debuggery(bool active= false, bool autoExport = false, bool forceOutputRawData = false)
+        {
+            //If Debuggery's enabled
+            if (active)
+            {
+                //Define excel destination
+                textBox2.Text = "C:\\Users\\Mike\\Desktop";
+
+                try
+                {
+                    //Read data and put it on the screen
+                    StreamReader quickRead = new StreamReader("C:\\Users\\Mike\\Desktop\\DataToParse.txt");
+                    textBox1.Text = quickRead.ReadToEnd();
+                    quickRead.Close();
+
+                    //Parse the data that was put on the screen
+                    ParseAndDisplayTable();
+
+                    //Export automatically if specified
+                    if(autoExport)
+                    {
+                        GenerateExcelFile(TableData, (forceOutputRawData) ? true : RuntimeSettings.OutputDataAsRawInExcel);
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message+" : "+ex.StackTrace);
+                }
+            }
         }
 
         /// <summary>
@@ -221,7 +275,7 @@ namespace ScheduleCreator
         {
             if (textBox2.Text != "" && textBox2.Text.Length >= 3)
             {
-                GenerateExcelFile(TableData, checkBox1.Checked);
+                GenerateExcelFile(TableData, RuntimeSettings.OutputDataAsRawInExcel);
             }
             else
             {
@@ -248,7 +302,6 @@ namespace ScheduleCreator
             button3.Enabled = false;
             button4.Visible = false;
             button5.Enabled = true;
-            comboBox1.Enabled = true;
         }
 
         /// <summary>
@@ -277,6 +330,17 @@ namespace ScheduleCreator
         }
 
         /// <summary>
+        /// Settings button
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void button6_Click(object sender, EventArgs e)
+        {
+            SettingsWindow settings = new SettingsWindow();
+            settings.Show();
+        }
+
+        /// <summary>
         /// Recursive function.
         /// Parses a given string, returns true if successful, false if not.
         /// Takes the following references: 
@@ -290,9 +354,9 @@ namespace ScheduleCreator
         /// <param name="parsingMarkers"></param>
         /// <param name="markerIndex"></param>
         /// <returns></returns>
-        private bool SingleCharDataParser(ref string dataString, ref int leftIndex, ref int rightIndex, ref Entry theNewEntryToFill, ref int EntryDataIndex, ref ParseMarker[] parsingMarkers, ref int markerIndex)
+        private bool DataParser(ref string dataString, ref int leftIndex, ref int rightIndex, ref Entry theNewEntryToFill, ref int EntryDataIndex, ref ParseMarker[] parsingMarkers, ref int markerIndex)
         {
-            while (rightIndex != dataString.Length && theNewEntryToFill.entryData[8] == null)
+            while (rightIndex != dataString.Length && theNewEntryToFill.dataStrings[8] == null)
             {
                 //If we found the target char
                 if (dataString[rightIndex] == parsingMarkers[markerIndex].target)
@@ -302,15 +366,14 @@ namespace ScheduleCreator
                     {
                         if (parsingMarkers[markerIndex].endMarker)
                         {
-
                             //Substring it
-                            theNewEntryToFill.entryData[EntryDataIndex++] = dataString.Substring(leftIndex + parsingMarkers[markerIndex].StartCharOffset, rightIndex - leftIndex + parsingMarkers[markerIndex].EndingCharOffset);
+                            theNewEntryToFill.dataStrings[EntryDataIndex++] = dataString.Substring(leftIndex + parsingMarkers[markerIndex].StartCharOffset, rightIndex - leftIndex + parsingMarkers[markerIndex].EndingCharOffset);
 
                             //Offset right index
                             rightIndex += Math.Abs(parsingMarkers[markerIndex++].EndingCharOffset);
                             leftIndex = rightIndex++;
 
-                            SingleCharDataParser(ref dataString, ref leftIndex, ref rightIndex, ref theNewEntryToFill, ref EntryDataIndex, ref parsingMarkers, ref markerIndex);
+                            DataParser(ref dataString, ref leftIndex, ref rightIndex, ref theNewEntryToFill, ref EntryDataIndex, ref parsingMarkers, ref markerIndex);
                         }
                         else
                         {
@@ -318,7 +381,7 @@ namespace ScheduleCreator
                             rightIndex += Math.Abs(parsingMarkers[markerIndex++].EndingCharOffset);
                             leftIndex = rightIndex++;
 
-                            SingleCharDataParser(ref dataString, ref leftIndex, ref rightIndex, ref theNewEntryToFill, ref EntryDataIndex, ref parsingMarkers, ref markerIndex);
+                            DataParser(ref dataString, ref leftIndex, ref rightIndex, ref theNewEntryToFill, ref EntryDataIndex, ref parsingMarkers, ref markerIndex);
                         }
                     }
                     //If it's not a starting marker (It's an end marker)
@@ -326,13 +389,13 @@ namespace ScheduleCreator
                     {
 
                         //Substring it
-                        theNewEntryToFill.entryData[EntryDataIndex++] = dataString.Substring(leftIndex + parsingMarkers[markerIndex].StartCharOffset, rightIndex - leftIndex + parsingMarkers[markerIndex].EndingCharOffset);
+                        theNewEntryToFill.dataStrings[EntryDataIndex++] = dataString.Substring(leftIndex + parsingMarkers[markerIndex].StartCharOffset, rightIndex - leftIndex + parsingMarkers[markerIndex].EndingCharOffset);
 
                         //Offset right index
                         rightIndex += Math.Abs(parsingMarkers[markerIndex++].EndingCharOffset);
                         leftIndex = rightIndex++;
 
-                        SingleCharDataParser(ref dataString, ref leftIndex, ref rightIndex, ref theNewEntryToFill, ref EntryDataIndex, ref parsingMarkers, ref markerIndex);
+                        DataParser(ref dataString, ref leftIndex, ref rightIndex, ref theNewEntryToFill, ref EntryDataIndex, ref parsingMarkers, ref markerIndex);
                     }
                 }
                 //If we didn't find the target index with the given marker
@@ -345,7 +408,7 @@ namespace ScheduleCreator
                         markerIndex += 2;
                         EntryDataIndex++;
 
-                        SingleCharDataParser(ref dataString, ref leftIndex, ref rightIndex, ref theNewEntryToFill, ref EntryDataIndex, ref parsingMarkers, ref markerIndex);
+                        DataParser(ref dataString, ref leftIndex, ref rightIndex, ref theNewEntryToFill, ref EntryDataIndex, ref parsingMarkers, ref markerIndex);
                     }
                     else
                     {
@@ -370,15 +433,17 @@ namespace ScheduleCreator
         private void ParseAndDisplayTable()
         {
             //Parse the data
-            entries = ParseText(textBox1.Text, comboBox1.SelectedIndex);
+            DataEntries = ParseText(textBox1.Text, RuntimeSettings.SelectedParserTemplate);
 
             //If any data was found and added
-            if (entries.Count != 0)
+            if (DataEntries.Count != 0)
             {
                 //Enable gridView and display the data table
                 dataGridView1.Visible = true;
-                TableData = GenerateTable(entries);
-                dataGridView1.DataSource = TableData;
+                TableData = GenerateTable(DataEntries);
+                dataGridView1.DataSource = TableData.Copy();
+
+                TableData.Rows.RemoveAt(TableData.Rows.Count-1);
 
                 label1.Text = "Data Table:";
 
@@ -389,7 +454,6 @@ namespace ScheduleCreator
                 button3.Enabled = true;
                 button4.Visible = true;
                 button5.Enabled = false;
-                comboBox1.Enabled = false;
             }
             else
             {
@@ -427,32 +491,32 @@ namespace ScheduleCreator
 
                         while (rightIndex != data.Length)
                         {
-                            Entry tableElement = new Entry();
+                            Entry tableElement = new Entry() { dataStrings = new string[9] };
 
                             int EntryIndex = 0, ParseMarkerIndex = 0;
 
                             //If we can parse out a data element, store in a table ordered by their weights (dayValue+timeValue)
-                            if (SingleCharDataParser(ref data, ref leftIndex, ref rightIndex, ref tableElement, ref EntryIndex, ref StandardParseMarkers, ref ParseMarkerIndex))
+                            if (DataParser(ref data, ref leftIndex, ref rightIndex, ref tableElement, ref EntryIndex, ref StandardParseMarkers, ref ParseMarkerIndex))
                             {
                                 //TODO: FIX THIS BUG!  (Parser will put what's supposed to be a day1 value into day2) 
                                 //This condition corrects this instance
-                                if (tableElement.entryData[4] == null && tableElement.entryData[5] != null)
+                                if (tableElement.dataStrings[4] == null && tableElement.dataStrings[5] != null)
                                 {
-                                    tableElement.entryData[4] = tableElement.entryData[5];
-                                    tableElement.entryData[5] = null;
+                                    tableElement.dataStrings[4] = tableElement.dataStrings[5];
+                                    tableElement.dataStrings[5] = null;
                                 }
 
                                 //Determine the weight given the day and time
-                                tableElement.timeValue = DecodeTimeValue(tableElement.entryData[6]);
-                                tableElement.day1weight = DecodeDayValue(tableElement.entryData[4]) + tableElement.timeValue;
+                                tableElement.timeValue = DecodeTimeValue(tableElement.dataStrings[6]);
+                                tableElement.day1weight = DecodeDayValue(tableElement.dataStrings[4]) + tableElement.timeValue;
 
                                 //If a second day was found, find the weight of that too
-                                if (tableElement.entryData[5] != null)
+                                if (tableElement.dataStrings[5] != null)
                                 {
-                                    tableElement.day2weight = DecodeDayValue(tableElement.entryData[5]) + tableElement.timeValue;
+                                    tableElement.day2weight = DecodeDayValue(tableElement.dataStrings[5]) + tableElement.timeValue;
                                 }
 
-                                creditSum += Convert.ToInt32(tableElement.entryData[8].Substring(0,1));
+                                creditSum += Convert.ToInt32(tableElement.dataStrings[8].Substring(0,1));
 
                                 //If this list was originally empty
                                 if (entries.Count == 0)
@@ -526,22 +590,16 @@ namespace ScheduleCreator
                 if((i == EntryList.Count) || dayMarker == 0 && ((elementToAdd.day2Entry && EntryList[i].day2Entry && EntryList[i].day2weight >= elementToAdd.day2weight) || (!elementToAdd.day2Entry && !EntryList[i].day2Entry && EntryList[i].day1weight >= elementToAdd.day1weight)))
                 {
                     //Use this marker as a starting point to organize by time
-                        dayMarker = i;
+                    dayMarker = i;
+
                     if ((i == EntryList.Count))
                     {
-                        {
-
                         EntryList.Add(elementToAdd);
-                        }
-
                         break;
                     }
                     else
                     {
                         EntryList.Insert(i, elementToAdd);
-
-
-
                         break;
                     }
                 }
@@ -589,10 +647,8 @@ namespace ScheduleCreator
             string parsedTime = time.Substring(0, 7);
             bool isPM = (parsedTime[5] == 'P') ? true : false;
 
-            int value = 0;
-
             //Convert the hour and minute value to an int
-            value = Convert.ToInt32(parsedTime.Substring(0, 2) + parsedTime.Substring(3, 2));
+            int value = Convert.ToInt32(parsedTime.Substring(0, 2) + parsedTime.Substring(3, 2));
             
             //Multiply it by two because we're going off a military time (sorta, if you ignore the exact minute value, which I don't think matters)
             value = (isPM) ? value+1200 : value;
@@ -621,8 +677,10 @@ namespace ScheduleCreator
             //Add all all the data of each entry into their own row
             for (int i = 0; i < entries.Count; i++)
             {
-                table.Rows.Add(((entries[i].day2Entry) ? entries[i].day2weight : entries[i].day1weight), entries[i].entryData[0], entries[i].entryData[6], entries[i].entryData[7], entries[i].entryData[3], entries[i].entryData[1], entries[i].entryData[8]);
+                table.Rows.Add(((entries[i].day2Entry) ? entries[i].day2weight : entries[i].day1weight), entries[i].dataStrings[0], entries[i].dataStrings[6], entries[i].dataStrings[7], entries[i].dataStrings[3], entries[i].dataStrings[1], entries[i].dataStrings[8]);
             }
+
+            table.Rows.Add("", "", "", "", "", "Credit Total : ", creditSum);
 
             return table;
         }
@@ -718,7 +776,7 @@ namespace ScheduleCreator
             Worksheet excelWorksheet = (Worksheet)excelWorkbook.ActiveSheet;
 
             //Find out the name using the data:
-            string dateFound = entries[entries.Count - 1].entryData[3].Substring(0, entries[entries.Count - 1].entryData[3].Length / 2);
+            string dateFound = DataEntries[DataEntries.Count - 1].dataStrings[3].Substring(0, DataEntries[DataEntries.Count - 1].dataStrings[3].Length / 2);
             int year = Convert.ToInt32(dateFound.Substring(6));
             string season = (Convert.ToInt32(dateFound.Substring(0, 2)) >= 9) ? "Fall" : "Spring";
             string fileNameAndPath = "";
@@ -755,7 +813,7 @@ namespace ScheduleCreator
 
                     //Loop through each entry
                     //Left+right index should be used to create a range for that given day
-                    for (int tableYvalue = 1, UpperYIndex = 0, BottomYIndex = 0, lastDayValueFound = -1, foundDayValue = 0; tableYvalue <= entries.Count+1; tableYvalue++)
+                    for (int tableYvalue = 1, UpperYIndex = 0, BottomYIndex = 0, lastDayValueFound = -1, foundDayValue = 0; tableYvalue <= DataEntries.Count+1; tableYvalue++)
                     {
                         //Input each piece of data into each column cell
                         for (int tableXvalue = 1; tableXvalue <= 7; tableXvalue++)
@@ -776,7 +834,7 @@ namespace ScheduleCreator
                             else
                             {
                                 //Determine the day
-                                foundDayValue = DetermineDayValue((entries[tableYvalue - 2].day2Entry) ? entries[tableYvalue - 2].day2weight : entries[tableYvalue - 2].day1weight);
+                                foundDayValue = DetermineDayValue((DataEntries[tableYvalue - 2].day2Entry) ? DataEntries[tableYvalue - 2].day2weight : DataEntries[tableYvalue - 2].day1weight);
 
                                 //Set the font of the cells to 12
                                 excelWorksheet.Cells[tableYvalue, tableXvalue].Font.Size = 12;
@@ -786,7 +844,7 @@ namespace ScheduleCreator
                                 {
                                     //Class name
                                     case 2:
-                                        excelWorksheet.Cells[tableYvalue, tableXvalue] = entries[tableYvalue - 2].entryData[0];
+                                        excelWorksheet.Cells[tableYvalue, tableXvalue] = DataEntries[tableYvalue - 2].dataStrings[0];
 
                                         //Assign the color of the cell to that day
                                         excelWorksheet.Cells[tableYvalue, tableXvalue].interior.Color = dayColors[foundDayValue];
@@ -795,7 +853,7 @@ namespace ScheduleCreator
                                     //Time
                                     case 3:
                                         //Format the time in a specific way (Ex: "9:30 AM - 10:45 AM" instead of "09:30AM - 10:45AM") 
-                                        string time = entries[tableYvalue - 2].entryData[6];
+                                        string time = DataEntries[tableYvalue - 2].dataStrings[6];
 
                                         string startTime = time.Substring(0,7);
                                         int startHour = Convert.ToInt16(startTime.Substring(0, 2));
@@ -817,7 +875,7 @@ namespace ScheduleCreator
 
                                     //Location
                                     case 4:
-                                        string location = entries[tableYvalue - 2].entryData[7];
+                                        string location = DataEntries[tableYvalue - 2].dataStrings[7];
 
                                         string room = location.Substring(location.IndexOf(',') + 1);
                                         string building = location.Substring(0,location.IndexOf(','));
@@ -833,8 +891,8 @@ namespace ScheduleCreator
                                     //Start/End date
                                     //Format the data in a specific way (Ex: "9/6/2018  -  1/23/2019" instead of "09/06/2018 - 01/23/2019")
                                     case 5:
-                                        string startDate = entries[tableYvalue - 2].entryData[3].Substring(0, 10);
-                                        string endDate = entries[tableYvalue - 2].entryData[3].Substring(11, 10);
+                                        string startDate = DataEntries[tableYvalue - 2].dataStrings[3].Substring(0, 10);
+                                        string endDate = DataEntries[tableYvalue - 2].dataStrings[3].Substring(11, 10);
 
                                         int startMonth = Convert.ToInt32(startDate.Substring(3, 2));
                                         int startDay = Convert.ToInt32(startDate.Substring(0, 2));
@@ -845,7 +903,7 @@ namespace ScheduleCreator
                                         string formattedDate = "";
 
                                         //If the user prefers it to be Day/Month/Year instead of Month/Day/Year
-                                        if (checkBox3.Checked)
+                                        if (RuntimeSettings.SwitchDayAndMonthPositionInExcel)
                                         {
                                             formattedDate = startMonth.ToString() + '/' + startDay + '/' + year;
                                             formattedDate += "  -  " + endMonth + '/' + endDay + '/' + year;
@@ -865,15 +923,14 @@ namespace ScheduleCreator
                                     //Professors name and email
                                     case 6:
                                         excelWorksheet.Cells[tableYvalue, tableXvalue].Font.Size = 12;
-
-                                        //professorsName + " ("+email+")"
-                                        string profcell = entries[tableYvalue - 2].entryData[1] + " (" + entries[tableYvalue - 2].entryData[2] + ")";
+                                        
+                                        string profcell = DataEntries[tableYvalue - 2].dataStrings[1] + " (" + DataEntries[tableYvalue - 2].dataStrings[2] + ")";
                                         int startEmailIndex = profcell.IndexOf('(');
 
                                         excelWorksheet.Cells[tableYvalue, tableXvalue] = profcell;
 
                                         //email 10 pnt font and bold
-                                        Characters email = excelWorksheet.Cells[tableYvalue, tableXvalue].Characters(startEmailIndex + 2, entries[tableYvalue - 2].entryData[2].Length);
+                                        Characters email = excelWorksheet.Cells[tableYvalue, tableXvalue].Characters(startEmailIndex + 2, DataEntries[tableYvalue - 2].dataStrings[2].Length);
                                         email.Font.Bold = true;
                                         email.Font.Size = 10;
 
@@ -883,7 +940,7 @@ namespace ScheduleCreator
 
                                     //Credits
                                     case 7:
-                                        excelWorksheet.Cells[tableYvalue, tableXvalue] = entries[tableYvalue - 2].entryData[8];
+                                        excelWorksheet.Cells[tableYvalue, tableXvalue] = DataEntries[tableYvalue - 2].dataStrings[8];
                                         break;
                                 }
 
@@ -900,7 +957,7 @@ namespace ScheduleCreator
                                 else
                                 {
                                     //If the day we're on isn't the same day or we hit the last entry
-                                    if ((lastDayValueFound != foundDayValue || tableYvalue == entries.Count + 1) && tableXvalue == 7)
+                                    if ((lastDayValueFound != foundDayValue || tableYvalue == DataEntries.Count + 1) && tableXvalue == 7)
                                     {
                                         //Shift up one since it's not friday
                                         if (lastDayValueFound != 4)
@@ -969,64 +1026,64 @@ namespace ScheduleCreator
                     for (int i = 1; i <= 7; i++)
                     {
                         excelWorksheet.Columns[i].ColumnWidth = GetColumnWidth(i);
-                        excelWorksheet.Range[excelWorksheet.Cells[2, i], excelWorksheet.Cells[entries.Count+1, i]].BorderAround(XlLineStyle.xlContinuous, XlBorderWeight.xlThick, XlColorIndex.xlColorIndexAutomatic, XlColorIndex.xlColorIndexAutomatic);
+                        excelWorksheet.Range[excelWorksheet.Cells[2, i], excelWorksheet.Cells[DataEntries.Count+1, i]].BorderAround(XlLineStyle.xlContinuous, XlBorderWeight.xlThick, XlColorIndex.xlColorIndexAutomatic, XlColorIndex.xlColorIndexAutomatic);
                     }
 
                     //If we want to also include the sum of the credits we're going for
-                    if (checkBox2.Checked)
+                    if (RuntimeSettings.OutputCreditTotalInExcel)
                     {
-                        var creditCell = excelWorksheet.Cells[entries.Count + 3, 7];
+                        var creditCell = excelWorksheet.Cells[DataEntries.Count + 3, 7];
 
                         creditCell.Font.Bold = true;
                         creditCell.HorizontalAlignment = XlHAlign.xlHAlignCenter;
                         creditCell.VerticalAlignment = XlVAlign.xlVAlignCenter;
-                        excelWorksheet.Cells[entries.Count + 3, 7] = creditSum.ToString();
+                        excelWorksheet.Cells[DataEntries.Count + 3, 7] = creditSum.ToString();
 
-                        var creditTotalLabel = excelWorksheet.Cells[entries.Count + 3, 6];
+                        var creditTotalLabel = excelWorksheet.Cells[DataEntries.Count + 3, 6];
 
                         creditTotalLabel.Font.Bold = true;
                         creditTotalLabel.HorizontalAlignment = XlHAlign.xlHAlignRight;
                         creditTotalLabel.VerticalAlignment = XlVAlign.xlVAlignCenter;
-                        excelWorksheet.Cells[entries.Count + 3, 6] = "Credit Total:";
+                        excelWorksheet.Cells[DataEntries.Count + 3, 6] = "Credit Total:";
                     }
                 }
                 else
                 {
                     //Loop through all entries
-                    for (int y = 1; y <= entries.Count; y++)
+                    for (int y = 1; y <= DataEntries.Count; y++)
                     {
                         //Loop through all the data in that entry
-                        for (int x = 1; x <= entries[0].entryData.Length; x++)
+                        for (int x = 1; x <= DataEntries[0].dataStrings.Length; x++)
                         {
-                            if (x == 5 || x == 6 && entries[y - 1].day2weight != 0)
+                            if (x == 5 || x == 6 && DataEntries[y - 1].day2weight != 0)
                             {
-                                int weight = (entries[y - 1].day2Entry) ? entries[y - 1].day2weight : entries[y - 1].day1weight;
+                                int weight = (DataEntries[y - 1].day2Entry) ? DataEntries[y - 1].day2weight : DataEntries[y - 1].day1weight;
 
                                 //Store the data into each cell
-                                excelWorksheet.Cells[y, x] = entries[y - 1].entryData[x - 1] + ' ' + weight;
+                                excelWorksheet.Cells[y, x] = DataEntries[y - 1].dataStrings[x - 1] + ' ' + weight;
                             }
                             else
                             {
-                                excelWorksheet.Cells[y, x] = entries[y - 1].entryData[x - 1];
+                                excelWorksheet.Cells[y, x] = DataEntries[y - 1].dataStrings[x - 1];
                             }
                         }
                     }
                     
                     //If we want to also include the sum of the credits we're going for
-                    if (checkBox2.Checked)
+                    if (RuntimeSettings.OutputCreditTotalInExcel)
                     {
-                        var creditCell = excelWorksheet.Cells[entries.Count + 2, 9];
+                        var creditCell = excelWorksheet.Cells[DataEntries.Count + 2, 9];
 
                         creditCell.Font.Bold = true;
                         creditCell.HorizontalAlignment = XlHAlign.xlHAlignCenter;
                         creditCell.VerticalAlignment = XlVAlign.xlVAlignCenter;
-                        excelWorksheet.Cells[entries.Count + 2, 9] = creditSum.ToString();
+                        excelWorksheet.Cells[DataEntries.Count + 2, 9] = creditSum.ToString();
 
-                        var creditTotalLabel = excelWorksheet.Cells[entries.Count + 2, 9];
+                        var creditTotalLabel = excelWorksheet.Cells[DataEntries.Count + 2, 9];
                         
                         creditTotalLabel.HorizontalAlignment = XlHAlign.xlHAlignRight;
                         creditTotalLabel.VerticalAlignment = XlVAlign.xlVAlignCenter;
-                        excelWorksheet.Cells[entries.Count + 2, 8] = "Credit Total:";
+                        excelWorksheet.Cells[DataEntries.Count + 2, 8] = "Credit Total:";
                     }
 
                     //Make sure the data fits
@@ -1064,11 +1121,12 @@ namespace ScheduleCreator
                 excelWorkbook.Close();
                 Excel.Quit();
 
+                //Make sure we have nothing running in the background (release the memory used)
                 Marshal.ReleaseComObject(excelWorksheet);
                 Marshal.ReleaseComObject(excelWorkbook);
                 Marshal.ReleaseComObject(Excel);
 
-                //Execute the file
+                //Run the Excel file
                 System.Diagnostics.Process.Start(fileNameAndPath + ".xlsx");
             }
         }

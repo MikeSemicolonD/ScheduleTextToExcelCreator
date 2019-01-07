@@ -12,9 +12,19 @@ namespace ScheduleCreator
 {
     public partial class MainWindow : Form
     {
+        /// <summary>
+        /// Allows for other windows to get a direct reference to this window during runtime
+        /// </summary>
         public static MainWindow instance;
 
-        //User Settings
+        /// <summary>
+        /// Settings window object itself
+        /// </summary>
+        private SettingsWindow settings = null;
+
+        /// <summary>
+        /// User Settings
+        /// </summary>
         public struct Settings
         {
             public bool OutputDataAsRawInExcel;
@@ -23,10 +33,14 @@ namespace ScheduleCreator
             public int SelectedParserTemplate;
         }
 
-        //Default Settings
+        /// <summary>
+        /// Default Settings
+        /// </summary>
         public readonly Settings Default = new Settings { OutputDataAsRawInExcel = false, OutputCreditTotalInExcel = true, SwitchDayAndMonthPositionInExcel = false, SelectedParserTemplate = 0 };
 
-        //Settings that we'll modify at runtime
+        /// <summary>
+        /// /Settings that we'll modify at runtime
+        /// </summary>
         public Settings RuntimeSettings = new Settings();
 
         /// <summary>
@@ -137,7 +151,7 @@ namespace ScheduleCreator
         /// If YOUR format is different you can create your own using another set of Parse markers to define your data format.
         /// If you defined your own set make sure to update 'comboBox1' so you can select it and use it.
         /// </summary>
-        private ParseMarker[] StandardParseMarkers = new ParseMarker[] {
+        private readonly ParseMarker[] StandardParseMarkers = new ParseMarker[] {
             new ParseMarker{target=')', EndingCharOffset = 2, startingMarker = true}, //0 Start marker for class name
             new ParseMarker{target='\n', EndingCharOffset = -1, startingMarker = true, endMarker = true}, //1 Start marker for Professor's name / end marker for class name
             new ParseMarker{target='\n', EndingCharOffset = -1, startingMarker = true, endMarker = true}, //2 Start marker for Email  / end marker for Professor's name
@@ -153,11 +167,11 @@ namespace ScheduleCreator
         };
 
         /// <summary>
+        /// Constructor
         /// When the form is initialized
         /// </summary>
         public MainWindow()
         {
-            instance = this;
             LoadSettings();
             InitializeComponent();
             SetupUI();
@@ -179,12 +193,21 @@ namespace ScheduleCreator
         /// <param name="IncludeCreditTotal"></param>
         /// <param name="SwitchDayMonth"></param>
         /// <param name="SetTemplate"></param>
-        public void ApplyNewSettings(bool OutputAsRaw,bool IncludeCreditTotal, bool SwitchDayMonth, int SetTemplate)
+        public void ApplyNewSettings(bool OutputAsRaw, bool IncludeCreditTotal, bool SwitchDayMonth, int SetTemplate)
         {
             RuntimeSettings.OutputDataAsRawInExcel = OutputAsRaw;
             RuntimeSettings.OutputCreditTotalInExcel = IncludeCreditTotal;
             RuntimeSettings.SwitchDayAndMonthPositionInExcel = SwitchDayMonth;
             RuntimeSettings.SelectedParserTemplate = SetTemplate;
+        }
+
+        /// <summary>
+        /// Gets called from the settings window when it's closed.
+        /// </summary>
+        public void ClosedSettingsWindowCallback()
+        {
+            settings = null;
+            button6.Enabled = true;
         }
 
         /// <summary>
@@ -197,9 +220,12 @@ namespace ScheduleCreator
 
         /// <summary>
         /// Disables a few things and sets up objects to make things look right
+        /// Also sets the current instance of this window during runtime
         /// </summary>
         private void SetupUI()
         {
+            instance = this;
+            StartPosition = FormStartPosition.CenterScreen;
             dataGridView1.Visible = false;
             button3.Enabled = false;
             button4.Visible = false;
@@ -336,8 +362,12 @@ namespace ScheduleCreator
         /// <param name="e"></param>
         private void button6_Click(object sender, EventArgs e)
         {
-            SettingsWindow settings = new SettingsWindow();
-            settings.Show();
+            if (settings == null)
+            {
+                settings = new SettingsWindow();
+                settings.Show();
+                button6.Enabled = false;
+            }
         }
 
         /// <summary>
@@ -354,7 +384,7 @@ namespace ScheduleCreator
         /// <param name="parsingMarkers"></param>
         /// <param name="markerIndex"></param>
         /// <returns></returns>
-        private bool DataParser(ref string dataString, ref int leftIndex, ref int rightIndex, ref Entry theNewEntryToFill, ref int EntryDataIndex, ref ParseMarker[] parsingMarkers, ref int markerIndex)
+        private bool DataParser(ref string dataString, ref int leftIndex, ref int rightIndex, ref Entry theNewEntryToFill, ref int EntryDataIndex, ParseMarker[] parsingMarkers, ref int markerIndex)
         {
             while (rightIndex != dataString.Length && theNewEntryToFill.dataStrings[8] == null)
             {
@@ -373,7 +403,7 @@ namespace ScheduleCreator
                             rightIndex += Math.Abs(parsingMarkers[markerIndex++].EndingCharOffset);
                             leftIndex = rightIndex++;
 
-                            DataParser(ref dataString, ref leftIndex, ref rightIndex, ref theNewEntryToFill, ref EntryDataIndex, ref parsingMarkers, ref markerIndex);
+                            DataParser(ref dataString, ref leftIndex, ref rightIndex, ref theNewEntryToFill, ref EntryDataIndex, parsingMarkers, ref markerIndex);
                         }
                         else
                         {
@@ -381,7 +411,7 @@ namespace ScheduleCreator
                             rightIndex += Math.Abs(parsingMarkers[markerIndex++].EndingCharOffset);
                             leftIndex = rightIndex++;
 
-                            DataParser(ref dataString, ref leftIndex, ref rightIndex, ref theNewEntryToFill, ref EntryDataIndex, ref parsingMarkers, ref markerIndex);
+                            DataParser(ref dataString, ref leftIndex, ref rightIndex, ref theNewEntryToFill, ref EntryDataIndex, parsingMarkers, ref markerIndex);
                         }
                     }
                     //If it's not a starting marker (It's an end marker)
@@ -395,7 +425,7 @@ namespace ScheduleCreator
                         rightIndex += Math.Abs(parsingMarkers[markerIndex++].EndingCharOffset);
                         leftIndex = rightIndex++;
 
-                        DataParser(ref dataString, ref leftIndex, ref rightIndex, ref theNewEntryToFill, ref EntryDataIndex, ref parsingMarkers, ref markerIndex);
+                        DataParser(ref dataString, ref leftIndex, ref rightIndex, ref theNewEntryToFill, ref EntryDataIndex, parsingMarkers, ref markerIndex);
                     }
                 }
                 //If we didn't find the target index with the given marker
@@ -408,7 +438,7 @@ namespace ScheduleCreator
                         markerIndex += 2;
                         EntryDataIndex++;
 
-                        DataParser(ref dataString, ref leftIndex, ref rightIndex, ref theNewEntryToFill, ref EntryDataIndex, ref parsingMarkers, ref markerIndex);
+                        DataParser(ref dataString, ref leftIndex, ref rightIndex, ref theNewEntryToFill, ref EntryDataIndex, parsingMarkers, ref markerIndex);
                     }
                     else
                     {
@@ -496,7 +526,7 @@ namespace ScheduleCreator
                             int EntryIndex = 0, ParseMarkerIndex = 0;
 
                             //If we can parse out a data element, store in a table ordered by their weights (dayValue+timeValue)
-                            if (DataParser(ref data, ref leftIndex, ref rightIndex, ref tableElement, ref EntryIndex, ref StandardParseMarkers, ref ParseMarkerIndex))
+                            if (DataParser(ref data, ref leftIndex, ref rightIndex, ref tableElement, ref EntryIndex, StandardParseMarkers, ref ParseMarkerIndex))
                             {
                                 //TODO: FIX THIS BUG!  (Parser will put what's supposed to be a day1 value into day2) 
                                 //This condition corrects this instance

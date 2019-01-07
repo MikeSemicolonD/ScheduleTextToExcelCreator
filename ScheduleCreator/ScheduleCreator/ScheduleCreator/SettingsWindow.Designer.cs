@@ -169,6 +169,7 @@
             this.MinimizeBox = false;
             this.Name = "SettingsWindow";
             this.Text = "Settings";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.SettingsWindow_FormClosing);
             this.ResumeLayout(false);
             this.PerformLayout();
 

@@ -9,5 +9,5 @@
 ## Where? :
   An .exe is accessible at this address: "Schedule_Text_To_Excel_Creator/ScheduleCreator/ScheduleCreator/ScheduleCreator/bin/Debug/".
 
-## This Guide is Dumb :
+## "This Guide is Dumb" :
   Don't worry, I've recently updated the program to support logging in to your student account and getting the data directly from mySNHU. It works and it's glorious. Unfortunately due to the coming semester, and how this project relates to other student projects. I'm holding off on pushing this recent update until after the semester ends.

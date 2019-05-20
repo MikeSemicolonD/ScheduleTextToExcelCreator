@@ -10,7 +10,7 @@ Directions:
 	Step 4: Navigate to each class page in your schedule and copy the name and email of the professor.
 	Step 5: Copy the word "New".
 	Step 6: Paste the name and email of your professor.
-	Step 7: Repeate for every class until you're done.
+	Step 7: Repeat for every class until you're done.
 	
 	Now you can use the data to get the data and generate an Excel file.
 	

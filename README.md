@@ -10,7 +10,7 @@
   An .exe is accessible at this address: "Schedule_Text_To_Excel_Creator/ScheduleCreator/ScheduleCreator/ScheduleCreator/bin/Debug/".
 
 # Directions & Screenshots:
-![](ScheduleCreator/How-to Guide/step1.PNG "Step 1: Go to your schedule for the semester.")
+![](/ScheduleCreator/How-to Guide/step1.PNG "Step 1: Go to your schedule for the semester.")
 ![](ScheduleCreator/How-to Guide/step2.PNG?raw=true "Step 2: Copy all the information for each class.")
 ![](ScheduleCreator/How-to Guide/step3.PNG?raw=true "Step 3: Open up a new text file (Or the program) and paste it.")
 ![](ScheduleCreator/How-to Guide/step4.PNG?raw=true "Step 4: Navigate to each class page in your schedule and copy the name and email of the professor.")

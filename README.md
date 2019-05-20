@@ -11,9 +11,15 @@
 
 # Directions & Screenshots:
 ![](Schedule_Text_To_Excel_Creator/ScheduleCreator/How-to Guide/step1.PNG?raw=true "Step 1: Go to your schedule for the semester.")
+
 ![](Schedule_Text_To_Excel_Creator/ScheduleCreator/How-to Guide/step2.PNG?raw=true "Step 2: Copy all the information for each class.")
+
 ![](Schedule_Text_To_Excel_Creator/ScheduleCreator/How-to Guide/step3.PNG?raw=true "Step 3: Open up a new text file (Or the program) and paste it.")
+
 ![](Schedule_Text_To_Excel_Creator/ScheduleCreator/How-to Guide/step4.PNG?raw=true "Step 4: Navigate to each class page in your schedule and copy the name and email of the professor.")
+
 ![](Schedule_Text_To_Excel_Creator/ScheduleCreator/How-to Guide/step5.PNG?raw=true "Step 5: Copy the word "New".")
+
 ![](Schedule_Text_To_Excel_Creator/ScheduleCreator/How-to Guide/step6.PNG?raw=true "Step 6: Paste the name and email of your professor.")
+
 ![](Schedule_Text_To_Excel_Creator/ScheduleCreator/How-to Guide/step7.PNG?raw=true "Step 7: Repeate for every class until you're done.")

@@ -8,7 +8,7 @@ Directions:
 	Step 2: Copy all the information for each class.
 	Step 3: Open up a new text file (Or the program) and paste it.
 	Step 4: Navigate to each class page in your schedule and copy the name and email of the professor.
-	Step 5: Copy the word "New".
+	Step 5: Select the word "New".
 	Step 6: Paste the name and email of your professor.
 	Step 7: Repeat for every class until you're done.
 	

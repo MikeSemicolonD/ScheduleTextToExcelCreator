@@ -22,5 +22,17 @@ namespace ScheduleCreator.Properties {
                 return defaultInstance;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string DefaultDir {
+            get {
+                return ((string)(this["DefaultDir"]));
+            }
+            set {
+                this["DefaultDir"] = value;
+            }
+        }
     }
 }

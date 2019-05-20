@@ -23,6 +23,11 @@ namespace ScheduleCreator
         private SettingsWindow settings = null;
 
         /// <summary>
+        /// SNHU login window itself
+        /// </summary>
+        //private mySNHULoginWindow login = null;
+
+        /// <summary>
         /// User Settings
         /// </summary>
         public struct Settings
@@ -30,13 +35,14 @@ namespace ScheduleCreator
             public bool OutputDataAsRawInExcel;
             public bool OutputCreditTotalInExcel;
             public bool SwitchDayAndMonthPositionInExcel;
+            public bool LoadTableOnLoad;
             public int SelectedParserTemplate;
         }
 
         /// <summary>
         /// Default Settings
         /// </summary>
-        public readonly Settings Default = new Settings { OutputDataAsRawInExcel = false, OutputCreditTotalInExcel = true, SwitchDayAndMonthPositionInExcel = false, SelectedParserTemplate = 0 };
+        public readonly Settings Default = new Settings { OutputDataAsRawInExcel = false, OutputCreditTotalInExcel = true, SwitchDayAndMonthPositionInExcel = false, LoadTableOnLoad = true, SelectedParserTemplate = 0 };
 
         /// <summary>
         /// /Settings that we'll modify at runtime
@@ -67,11 +73,6 @@ namespace ScheduleCreator
         /// The sum of all the credits owed for each class
         /// </summary>
         private int creditSum = 0;
-
-        /// <summary>
-        /// Table for storing schedule data when it's been successfully parsed.
-        /// </summary>
-        private DataTable TableData;
 
         /// <summary>
         /// Array element to store the data
@@ -179,6 +180,27 @@ namespace ScheduleCreator
         }
 
         /// <summary>
+        /// Gets called when the window is being closed.
+        /// Allows to have only a single instance of this window.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void MainWindow_FormClosing(Object sender, FormClosingEventArgs e)
+        {
+            if(settings != null)
+            {
+                settings.Close();
+                settings = null;
+            }
+
+            //if(login != null)
+            //{
+            //    login.Close();
+            //    login = null;
+            //}
+        }
+
+        /// <summary>
         /// Sets the runtime settings to default
         /// </summary>
         public void ApplyDefaultSettings()
@@ -193,12 +215,22 @@ namespace ScheduleCreator
         /// <param name="IncludeCreditTotal"></param>
         /// <param name="SwitchDayMonth"></param>
         /// <param name="SetTemplate"></param>
-        public void ApplyNewSettings(bool OutputAsRaw, bool IncludeCreditTotal, bool SwitchDayMonth, int SetTemplate)
+        public void ApplyNewSettings(bool OutputAsRaw, bool IncludeCreditTotal, bool SwitchDayMonth, bool CreateTableOnLoad, int SetTemplate)
         {
             RuntimeSettings.OutputDataAsRawInExcel = OutputAsRaw;
             RuntimeSettings.OutputCreditTotalInExcel = IncludeCreditTotal;
             RuntimeSettings.SwitchDayAndMonthPositionInExcel = SwitchDayMonth;
+            RuntimeSettings.LoadTableOnLoad = CreateTableOnLoad;
             RuntimeSettings.SelectedParserTemplate = SetTemplate;
+        }
+
+        /// <summary>
+        /// Gets called from the login window when it's closed.
+        /// </summary>
+        public void ClosedLoginWindowCallback()
+        {
+            //login = null;
+            button7.Enabled = true;
         }
 
         /// <summary>
@@ -229,6 +261,11 @@ namespace ScheduleCreator
             dataGridView1.Visible = false;
             button3.Enabled = false;
             button4.Visible = false;
+            
+            if (Properties.Settings.Default.DefaultDir.Length != 0)
+            {
+                textBox2.Text = Properties.Settings.Default.DefaultDir;
+            }
         }
 
         /// <summary>
@@ -250,7 +287,7 @@ namespace ScheduleCreator
                 {
                     //Read data and put it on the screen
                     StreamReader quickRead = new StreamReader("C:\\Users\\Mike\\Desktop\\DataToParse.txt");
-                    textBox1.Text = quickRead.ReadToEnd();
+                    LoadDataIntoTextBox(quickRead.ReadToEnd());
                     quickRead.Close();
 
                     //Parse the data that was put on the screen
@@ -259,7 +296,7 @@ namespace ScheduleCreator
                     //Export automatically if specified
                     if(autoExport)
                     {
-                        GenerateExcelFile(TableData, (forceOutputRawData) ? true : RuntimeSettings.OutputDataAsRawInExcel);
+                        GenerateExcelFile((DataTable) dataGridView1.DataSource, (forceOutputRawData) ? true : RuntimeSettings.OutputDataAsRawInExcel);
                     }
 
                 }
@@ -267,6 +304,21 @@ namespace ScheduleCreator
                 {
                     MessageBox.Show(ex.Message+" : "+ex.StackTrace);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Gets called from either the login window or this window to load string data.
+        /// </summary>
+        /// <param name="data"></param>
+        public void LoadDataIntoTextBox(string data)
+        {
+            textBox1.Text = data;
+
+            //If the user want to generate the table on data load
+            if(RuntimeSettings.LoadTableOnLoad)
+            {
+                ParseAndDisplayTable();
             }
         }
 
@@ -301,7 +353,10 @@ namespace ScheduleCreator
         {
             if (textBox2.Text != "" && textBox2.Text.Length >= 3)
             {
-                GenerateExcelFile(TableData, RuntimeSettings.OutputDataAsRawInExcel);
+                button3.Text = "Exporting...";
+                button3.Enabled = false;
+
+                GenerateExcelFile((DataTable)dataGridView1.DataSource, RuntimeSettings.OutputDataAsRawInExcel);
             }
             else
             {
@@ -316,7 +371,6 @@ namespace ScheduleCreator
         /// <param name="e"></param>
         private void Button4_Click(object sender, EventArgs e)
         {
-            TableData = null;
             dataGridView1.DataSource = null;
             dataGridView1.Visible = false;
 
@@ -328,6 +382,7 @@ namespace ScheduleCreator
             button3.Enabled = false;
             button4.Visible = false;
             button5.Enabled = true;
+            button7.Enabled = true;
         }
 
         /// <summary>
@@ -343,11 +398,18 @@ namespace ScheduleCreator
 
             try
             {
-                StreamReader quickRead = new StreamReader(openFileDialog.FileName);
+                if (openFileDialog.FileName != "")
+                {
+                    StreamReader quickRead = new StreamReader(openFileDialog.FileName);
 
-                textBox1.Text = quickRead.ReadToEnd();
+                    LoadDataIntoTextBox(quickRead.ReadToEnd());
 
-                quickRead.Close();
+                    quickRead.Close();
+                }
+                else
+                {
+                    MessageBox.Show("No Directory Specified!");
+                }
             }
             catch(Exception ex)
             {
@@ -360,7 +422,7 @@ namespace ScheduleCreator
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void button6_Click(object sender, EventArgs e)
+        private void Button6_Click(object sender, EventArgs e)
         {
             if (settings == null)
             {
@@ -368,6 +430,21 @@ namespace ScheduleCreator
                 settings.Show();
                 button6.Enabled = false;
             }
+        }
+
+        /// <summary>
+        /// Load from mySNHU button
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Button7_Click(object sender, EventArgs e)
+        {
+            //if (login == null)
+            //{
+            //    login = new mySNHULoginWindow();
+            //    login.Show();
+            //    button7.Enabled = false;
+            //}
         }
 
         /// <summary>
@@ -470,10 +547,7 @@ namespace ScheduleCreator
             {
                 //Enable gridView and display the data table
                 dataGridView1.Visible = true;
-                TableData = GenerateTable(DataEntries);
-                dataGridView1.DataSource = TableData.Copy();
-
-                TableData.Rows.RemoveAt(TableData.Rows.Count-1);
+                dataGridView1.DataSource = GenerateTable(DataEntries);
 
                 label1.Text = "Data Table:";
 
@@ -484,6 +558,7 @@ namespace ScheduleCreator
                 button3.Enabled = true;
                 button4.Visible = true;
                 button5.Enabled = false;
+                button7.Enabled = false;
             }
             else
             {
@@ -507,7 +582,7 @@ namespace ScheduleCreator
                 //ComboBox1 items in order:
                 //Each element represents a parsing method
                 // 0   - Standard
-                // 0+1 - etc...
+                // 1   - etc...
 
                 //Type defines what kind of ParseMarkers are used to get the data
                 switch(type)
@@ -668,6 +743,7 @@ namespace ScheduleCreator
         /// <summary>
         /// Returns a value that corresponds to the time string that was passed in.
         /// Example input = "09:30AM - 10:45AM"
+        /// Example output = 930
         /// </summary>
         /// <param name="time"></param>
         /// <returns></returns>
@@ -675,7 +751,7 @@ namespace ScheduleCreator
         {
             //Get the starting hour to judge the weight
             string parsedTime = time.Substring(0, 7);
-            bool isPM = (parsedTime[5] == 'P') ? true : false;
+            bool isPM = (parsedTime[5] == 'P' && parsedTime[0] != '1') ? true : false;
 
             //Convert the hour and minute value to an int
             int value = Convert.ToInt32(parsedTime.Substring(0, 2) + parsedTime.Substring(3, 2));
@@ -750,6 +826,7 @@ namespace ScheduleCreator
 
         /// <summary>
         /// Returns a width value that corresponds with the column number that's put in
+        /// NOTE: These have lesser values than what will be outputted in the Excel file
         /// </summary>
         /// <param name="XTableCell"></param>
         /// <returns></returns>
@@ -796,6 +873,10 @@ namespace ScheduleCreator
         /// <param name="tableData"></param>
         private void GenerateExcelFile(DataTable tableData, bool OutputRaw=false)
         {
+
+            Properties.Settings.Default.DefaultDir = textBox2.Text;
+            Properties.Settings.Default.Save();
+
             Microsoft.Office.Interop.Excel.Application Excel = new Microsoft.Office.Interop.Excel.Application
             {
                 Visible = false,
@@ -813,6 +894,9 @@ namespace ScheduleCreator
 
             //Name the excel sheet
             excelWorksheet.Name = "College Schedule " + year.ToString() + " " + season.ToString();
+
+            //Remove credit count
+            tableData.Rows.RemoveAt(tableData.Rows.Count - 1);
 
             try
             {
@@ -954,15 +1038,19 @@ namespace ScheduleCreator
                                     case 6:
                                         excelWorksheet.Cells[tableYvalue, tableXvalue].Font.Size = 12;
                                         
-                                        string profcell = DataEntries[tableYvalue - 2].dataStrings[1] + " (" + DataEntries[tableYvalue - 2].dataStrings[2] + ")";
+                                        string profcell = DataEntries[tableYvalue - 2].dataStrings[1] + " (" + DataEntries[tableYvalue - 2].dataStrings[2]+ ")";
                                         int startEmailIndex = profcell.IndexOf('(');
 
                                         excelWorksheet.Cells[tableYvalue, tableXvalue] = profcell;
 
-                                        //email 10 pnt font and bold
-                                        Characters email = excelWorksheet.Cells[tableYvalue, tableXvalue].Characters(startEmailIndex + 2, DataEntries[tableYvalue - 2].dataStrings[2].Length);
-                                        email.Font.Bold = true;
-                                        email.Font.Size = 10;
+                                        //If there is any data to bolden
+                                        if (DataEntries[tableYvalue - 2].dataStrings[2].Length != 0)
+                                        {
+                                            //email 10 pnt font and bold
+                                            Characters email = excelWorksheet.Cells[tableYvalue, tableXvalue].Characters(startEmailIndex + 2, DataEntries[tableYvalue - 2].dataStrings[2].Length);
+                                            email.Font.Bold = true;
+                                            email.Font.Size = 10;
+                                        }
 
                                         //Assign the color of the cell to that day
                                         excelWorksheet.Cells[tableYvalue, tableXvalue].interior.Color = dayColors[foundDayValue];
@@ -987,7 +1075,7 @@ namespace ScheduleCreator
                                 else
                                 {
                                     //If the day we're on isn't the same day or we hit the last entry
-                                    if ((lastDayValueFound != foundDayValue || tableYvalue == DataEntries.Count + 1) && tableXvalue == 7)
+                                    if ((lastDayValueFound != foundDayValue || tableYvalue == DataEntries.Count+1) && tableXvalue == 7)
                                     {
                                         //Shift up one since it's not friday
                                         if (lastDayValueFound != 4)
@@ -999,46 +1087,55 @@ namespace ScheduleCreator
                                             BottomYIndex = tableYvalue;
                                         }
 
-                                        //Define range for lastDay using BottomYIndex and UpperYIndex and do formating for day range
-                                        var DayColumn = excelWorksheet.Range[excelWorksheet.Cells[UpperYIndex, 1], excelWorksheet.Cells[BottomYIndex, 1]];
-                                        DayColumn.BorderAround(XlLineStyle.xlContinuous, XlBorderWeight.xlThick, XlColorIndex.xlColorIndexAutomatic, XlColorIndex.xlColorIndexAutomatic);
-
-                                        //Format the bottom of this day cell 
-                                        DayColumn = excelWorksheet.Range[excelWorksheet.Cells[BottomYIndex, 2], excelWorksheet.Cells[BottomYIndex, 7]];
-                                        DayColumn.Borders[XlBordersIndex.xlEdgeBottom].Weight = XlBorderWeight.xlThick;
-
-                                        //Find the 'center cell'
-                                        //If there's only one cell for this day
-                                        if (BottomYIndex - UpperYIndex == 0)
+                                        if (tableYvalue != DataEntries.Count + 1)
                                         {
-                                            excelWorksheet.Cells[UpperYIndex, 1].Font.Bold = true;
-                                            excelWorksheet.Cells[UpperYIndex, 1].Font.Size = 10;
-                                            excelWorksheet.Cells[UpperYIndex, 1].HorizontalAlignment = XlHAlign.xlHAlignCenter;
-                                            excelWorksheet.Cells[UpperYIndex, 1] = DayStrings[lastDayValueFound];
+
+                                            //Define range for lastDay using BottomYIndex and UpperYIndex and do formating for day range
+                                            var DayColumn = excelWorksheet.Range[excelWorksheet.Cells[UpperYIndex, 1], excelWorksheet.Cells[BottomYIndex, 1]];
+                                            DayColumn.BorderAround(XlLineStyle.xlContinuous, XlBorderWeight.xlThick, XlColorIndex.xlColorIndexAutomatic, XlColorIndex.xlColorIndexAutomatic);
+
+                                            //Format the inner lines of this day cell 
+                                            DayColumn = excelWorksheet.Range[excelWorksheet.Cells[BottomYIndex, 2], excelWorksheet.Cells[BottomYIndex, 7]];
+                                            DayColumn.Borders[XlBordersIndex.xlEdgeBottom].Weight = XlBorderWeight.xlThick;
                                         }
-                                        //If there's only two cells for this day
-                                        else if (BottomYIndex - UpperYIndex == 1)
+
+                                        int location = (int) Math.Floor((BottomYIndex - (UpperYIndex)) / 2f);
+                                        bool EvenSpacing = false;
+
+                                        if (tableYvalue == DataEntries.Count + 1)
                                         {
-                                            excelWorksheet.Cells[UpperYIndex, 1].Font.Bold = true;
-                                            excelWorksheet.Cells[UpperYIndex, 1].Font.Size = 10;
-                                            excelWorksheet.Cells[UpperYIndex, 1].HorizontalAlignment = XlHAlign.xlHAlignCenter;
-                                            excelWorksheet.Cells[UpperYIndex, 1].VerticalAlignment = XlVAlign.xlVAlignBottom;
-                                            excelWorksheet.Cells[UpperYIndex, 1] = DayStrings[lastDayValueFound];
+                                            if (lastDayValueFound != 4)
+                                            {
+                                                UpperYIndex++;
+                                                EvenSpacing = ((BottomYIndex - (UpperYIndex)) % 2 == 0) ? true : false;
+                                            }
+                                            else
+                                            {
+                                                EvenSpacing = ((BottomYIndex - (UpperYIndex)) % 2 == 0) ? true : false;
+                                                BottomYIndex++;
+                                            }
                                         }
-                                        //If there's more than 2 cells
                                         else
                                         {
-                                            //Find the distance from the center cell to find the center cell index
-                                            int cellOffset = (BottomYIndex - UpperYIndex) / 2;
-                                            cellOffset += UpperYIndex;
-
-                                            excelWorksheet.Cells[cellOffset, 1].Font.Bold = true;
-                                            excelWorksheet.Cells[cellOffset, 1].Font.Size = 10;
-                                            excelWorksheet.Cells[cellOffset, 1].HorizontalAlignment = XlHAlign.xlHAlignCenter;
-                                            excelWorksheet.Cells[cellOffset, 1].VerticalAlignment = XlVAlign.xlVAlignBottom;
-                                            excelWorksheet.Cells[cellOffset, 1] = DayStrings[lastDayValueFound];
+                                            EvenSpacing = ((BottomYIndex - (UpperYIndex)) % 2 == 0) ? true : false;
                                         }
-                                        
+
+                                        if(EvenSpacing)
+                                        {
+                                            excelWorksheet.Cells[UpperYIndex + location, 1].Font.Bold = true;
+                                            excelWorksheet.Cells[UpperYIndex + location, 1].Font.Size = 10;
+                                            excelWorksheet.Cells[UpperYIndex + location, 1].HorizontalAlignment = XlHAlign.xlHAlignCenter;
+                                            excelWorksheet.Cells[UpperYIndex + location, 1] = DayStrings[lastDayValueFound];
+                                        }
+                                        else //Align vertically if it's an odd number of days
+                                        {
+                                            excelWorksheet.Cells[UpperYIndex + location, 1].Font.Bold = true;
+                                            excelWorksheet.Cells[UpperYIndex + location, 1].Font.Size = 10;
+                                            excelWorksheet.Cells[UpperYIndex + location, 1].HorizontalAlignment = XlHAlign.xlHAlignCenter;
+                                            excelWorksheet.Cells[UpperYIndex + location, 1] = DayStrings[lastDayValueFound];
+                                            excelWorksheet.Cells[UpperYIndex + location, 1].VerticalAlignment = XlVAlign.xlVAlignBottom;
+                                        }
+
                                         lastDayValueFound = foundDayValue;
                                         UpperYIndex = tableYvalue;
                                     }
@@ -1075,6 +1172,9 @@ namespace ScheduleCreator
                         creditTotalLabel.HorizontalAlignment = XlHAlign.xlHAlignRight;
                         creditTotalLabel.VerticalAlignment = XlVAlign.xlVAlignCenter;
                         excelWorksheet.Cells[DataEntries.Count + 3, 6] = "Credit Total:";
+
+                        creditCell.Font.Size = 12;
+                        creditTotalLabel.Font.Size = 12;
                     }
                 }
                 else
@@ -1126,6 +1226,10 @@ namespace ScheduleCreator
                 //Define our path and file name
                 fileNameAndPath = textBox2.Text + '/' + excelWorksheet.Name;
 
+                excelWorksheet.PageSetup.Orientation = XlPageOrientation.xlLandscape;
+                excelWorksheet.PageSetup.Zoom = false;
+                excelWorksheet.PageSetup.FitToPagesTall = 1;
+                excelWorksheet.PageSetup.FitToPagesWide = 1;
 
             }
             catch (ApplicationException ex)
@@ -1146,8 +1250,29 @@ namespace ScheduleCreator
             }
             finally
             {
+                button3.Text = "Export to Excel";
+                button3.Enabled = true;
+
+                bool Valid = false;
+                int numVersion = 0;
+                string versionExtension="";
+
+                while (!Valid)
+                {
+                    if (File.Exists(fileNameAndPath + versionExtension + ".xlsx"))
+                    {
+                        numVersion++;
+                        versionExtension = "(" + numVersion + ")";
+                    }
+                    else
+                    {
+                        Valid = true;
+                    }
+                }
+
                 //Save it and close it
-                excelWorkbook.SaveAs(fileNameAndPath);
+                excelWorkbook.SaveAs(fileNameAndPath + versionExtension);
+                excelWorkbook.ExportAsFixedFormat(XlFixedFormatType.xlTypePDF, fileNameAndPath + versionExtension);
                 excelWorkbook.Close();
                 Excel.Quit();
 
@@ -1157,7 +1282,7 @@ namespace ScheduleCreator
                 Marshal.ReleaseComObject(Excel);
 
                 //Run the Excel file
-                System.Diagnostics.Process.Start(fileNameAndPath + ".xlsx");
+                System.Diagnostics.Process.Start(fileNameAndPath + versionExtension + ".xlsx");
             }
         }
     }

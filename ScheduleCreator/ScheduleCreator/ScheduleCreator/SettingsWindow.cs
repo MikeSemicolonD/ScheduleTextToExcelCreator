@@ -18,7 +18,7 @@ namespace ScheduleCreator
         }
 
         /// <summary>
-        /// Gets called when the window is being called.
+        /// Gets called when the window is being closed.
         /// Allows to have only a single instance of this window.
         /// </summary>
         /// <param name="sender"></param>
@@ -34,9 +34,9 @@ namespace ScheduleCreator
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void button1_Click(object sender, EventArgs e)
+        private void Button1_Click(object sender, EventArgs e)
         {
-            MainWindow.instance.ApplyNewSettings(checkBox1.Checked,checkBox2.Checked,checkBox3.Checked,comboBox1.SelectedIndex);
+            MainWindow.instance.ApplyNewSettings(checkBox1.Checked,checkBox2.Checked,checkBox3.Checked,checkBox4.Checked,comboBox1.SelectedIndex);
             Close();
         }
 
@@ -45,10 +45,9 @@ namespace ScheduleCreator
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void button2_Click(object sender, EventArgs e)
+        private void Button2_Click(object sender, EventArgs e)
         {
             MainWindow.instance.ApplyDefaultSettings();
-            
             ApplySettingsToUI(MainWindow.instance.Default);
         }
 
@@ -61,6 +60,7 @@ namespace ScheduleCreator
             checkBox1.Checked = newSettings.OutputDataAsRawInExcel;
             checkBox2.Checked = newSettings.OutputCreditTotalInExcel;
             checkBox3.Checked = newSettings.SwitchDayAndMonthPositionInExcel;
+            checkBox4.Checked = newSettings.LoadTableOnLoad;
             comboBox1.SelectedIndex = newSettings.SelectedParserTemplate;
         }
     }

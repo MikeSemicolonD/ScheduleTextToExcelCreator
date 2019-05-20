@@ -9,7 +9,7 @@ g.ludlow@snhu.edu
 MAT-275-06792 (0006792) Calc II: Integration & Series
 Jenna M. Reis
 j.reis@snhu.edu
-01/16/2019-05/03/2019 Lecture Wednesday, Friday 11:00AM - 12:15PM, Robert Frost Hall, Room 227
+01/16/2019-05/03/2019 Lecture Wednesday, Thursday 11:00AM - 12:15PM, Robert Frost Hall, Room 227
 3.00
  
  
@@ -41,7 +41,7 @@ r.macauslan1@snhu.edu
 PHY-215L-24725 (0024725) Physics I Lab
 Steven R. Watchorn
 s.watchorn@snhu.edu
-01/16/2019-05/01/2019 Laboratory Wednesday 06:30PM - 09:15PM, Robert Frost Hall, Room 209
+01/16/2019-05/01/2019 Laboratory Thursday 08:00AM - 09:45PM, Robert Frost Hall, Room 209
 1.00
  
  
@@ -49,7 +49,7 @@ s.watchorn@snhu.edu
 ENG-200-02581 (0002581) Sophomore Seminar
 Todd Richardson
 t.richardson2@snhu.edu
-01/15/2019-05/03/2019 Lecture Tuesday, Friday 08:00AM - 09:15AM, Stark Hall, Room 06
+01/15/2019-05/03/2019 Lecture Monday, Thursday 08:00AM - 09:15AM, Stark Hall, Room 06
 3.00
  
  

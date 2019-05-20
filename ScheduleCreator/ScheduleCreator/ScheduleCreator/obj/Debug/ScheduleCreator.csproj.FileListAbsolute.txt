@@ -18,3 +18,5 @@ C:\Users\Mike\Documents\Projects\ScheduleTextToExcelCreator\ScheduleCreator\Sche
 C:\Users\Mike\Documents\Projects\ScheduleTextToExcelCreator\ScheduleCreator\ScheduleCreator\ScheduleCreator\obj\Debug\Schedule Builder.pdb
 C:\Users\Mike\Documents\Projects\ScheduleTextToExcelCreator\ScheduleCreator\ScheduleCreator\ScheduleCreator\obj\Debug\ScheduleCreator.MainWindow.resources
 C:\Users\Mike\Documents\Projects\ScheduleTextToExcelCreator\ScheduleCreator\ScheduleCreator\ScheduleCreator\obj\Debug\ScheduleCreator.SettingsWindow.resources
+C:\Users\Mike\Documents\Projects\ScheduleTextToExcelCreator\ScheduleCreator\ScheduleCreator\ScheduleCreator\obj\Debug\ScheduleCreator.mySNHULoginWindow.resources
+C:\Users\Mike\Documents\Projects\ScheduleTextToExcelCreator\ScheduleCreator\ScheduleCreator\ScheduleCreator\obj\Debug\ScheduleCreator.TermSelectWindow.resources

@@ -1,7 +1,6 @@
 About:
 	This is meant to provide a guide on how to copy your student schedule and paste it in a way so that my program's 'standard' parser could get understand it.
 	This guide is meant to simplify the process down to just simple copying and pasting. You shouldn't have to add or remove any text yourself.
-	I know, this is quite ridiculous. Later on I plan on automating this process by simply asking you for your SNHU login and password. But for now, it's done this way...
 	
 Directions:
 	Step 1: Go to your schedule for the semester.
@@ -11,6 +10,5 @@ Directions:
 	Step 5: Select the word "New".
 	Step 6: Paste the name and email of your professor.
 	Step 7: Repeat for every class until you're done.
-	
-	Now you can use the data to get the data and generate an Excel file.
+	Step 8: Load your file into my program. Select a directory to store your Excel File, then click 'Export'.
 	

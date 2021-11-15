@@ -1,5 +1,10 @@
 # Schedule Text To Excel Creator
 
+## FYI :
+  This repo is no longer being updated. (because I graduated, thus I no longer need this)
+  Version 2 of this repo can be found here. (https://github.com/MikeSemicolonD/SNHUScheduleCreator)
+  Version 2 includes a login window that's able to extract the data from your schedule page automatically.
+
 ## Description :
   A simple project I started during winter break. My intention was to make an application that'll allow me to more easily create an Excel sheet that represents my schedule. 
 

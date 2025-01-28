@@ -44,5 +44,5 @@
 ![](https://github.com/MikeSemicolonD/Schedule_Text_To_Excel_Creator/blob/master/ScheduleCreator/How-to%20Guide/step7.PNG "Step 7: Repeat for every class until you're done.")
 
 ### Step 8: Load your file into my program. Select a directory to store your Excel File, then click 'Export'.
-![](https://github.com/MikeSemicolonD/Schedule_Text_To_Excel_Creator/blob/master/ScheduleCreator/ExampleOutput.PNG "Step 8: Load your file into my program. Select a directory to store your Excel File, then click 'Export'")
+![](https://github.com/MikeSemicolonD/Schedule_Text_To_Excel_Creator/blob/master/ExampleOutput.PNG "Step 8: Load your file into my program. Select a directory to store your Excel File, then click 'Export'")
 
